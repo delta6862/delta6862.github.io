@@ -12,7 +12,7 @@
 This post is about a bug found in Magister which allowed a malicious actor to store arbitrary javascript code on the site. 
 This issue has since been patched and been made free to publicly disclose.
 If you're unfamiliar with Magister as a platform I've briefly explained it in a different blog post which can be 
-found [here](https://github.com/delta6862/library/blob/master/bug-bounty/magister.md#magister).
+found [here](https://delta6862.github.io/library/Bug_Bounties/Magister/Password_reset/#magister).
 
 ## The bug
 Magister has a feature called "ELO bronnen" where users can store files, folders, and most crucially for this bug; URLs. 
