@@ -1,3 +1,5 @@
+## Magister: Password Reset
+
 ![thumbnail]
 
 [thumbnail]: thumbnail.png

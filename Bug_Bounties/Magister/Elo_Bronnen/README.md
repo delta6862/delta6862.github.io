@@ -1,3 +1,5 @@
+## Magister: Stored XSS
+
 ![thumbnail]
 
 ## Overview
