@@ -1,5 +1,3 @@
-# Library
-- ## Bug Bounties
-  - ## Magister
-    - [Password Reset](Bug_Bounties/Magister/Password_reset)
-    - [ELO Bronnen](Bug_Bounties/Magister/Elo_Bronnen)
+## Real World
+  - [Magister: Password Reset](Bug_Bounties/Magister/Password_reset)
+  - [Magister: Stored XSS](Bug_Bounties/Magister/Elo_Bronnen)
