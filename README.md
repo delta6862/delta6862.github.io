@@ -1,4 +1,4 @@
 # Home
 ## Real World
-  - [Magister: Password Reset](Bug_Bounties/Magister/Password_reset)
-  - [Magister: Stored XSS](Bug_Bounties/Magister/Elo_Bronnen)
+  - [Magister: Password Reset](Real_World/Magister/Password_reset)
+  - [Magister: Stored XSS](Real_World/Magister/Elo_Bronnen)
