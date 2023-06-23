@@ -1,4 +1,4 @@
-## Intro
+## Domjudge: Full chain
 *TL;DR: Domjudge from git commit ee3dea3 up to git commit 2a244d9 allows for unauthenticated root-level code execution 
 and container escape if sign-up is enabled. This is done by abusing an arbitrary file read, Symfony Edge Side Inclusion, 
 command injection and Docker escape.*
