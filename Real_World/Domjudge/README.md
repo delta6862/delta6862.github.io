@@ -396,7 +396,8 @@ like the Symfony console.
 Secondly, note keeping. When I first started this project I was sitting in the back of a car, lazily browsing code and 
 my note keeping followed roughly the same style. At the end of the project my note keeping tree looked like this:
 
-![file-structure.png]
+![file-structure]
+[file-structure]: file-structure.png
 
 While it's not terrible, its certainly not as organized as it can be. A lot of things did not get taken into notes like 
 links I read on my phone, thoughts I had when not working on the project and websites I didn't bother to write down. 
