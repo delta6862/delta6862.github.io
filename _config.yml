@@ -8,9 +8,9 @@ description: >
 theme: minima
 
 minima:
-  social_links:
-    - { platform: github,         user_url: "https://github.com/delta6862" }
-    - { platform: twitter,        user_url: "https://twitter.com/delta6862" }
+   social_links:
+     - { platform: github,         user_url: "https://github.com/delta6862" }
+     - { platform: twitter,        user_url: "https://twitter.com/delta6862" }
 
 header_pages:
  - README.md
