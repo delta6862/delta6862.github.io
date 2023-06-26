@@ -1,27 +1,27 @@
-## Domjudge: Full chain
-*TL;DR: Domjudge from git commit ee3dea3 up to git commit 2a244d9 allows for unauthenticated root-level code execution 
+## DOMjudge: Full chain
+*TL;DR: DOMjudge from git commit ee3dea3 up to git commit 2a244d9 allows for unauthenticated root-level code execution 
 and container escape if user sign-up is enabled. This is done by chaining five vulnerabilities: an arbitrary file read, 
 Symfony Edge Side Inclusion, command injection, privilege escalation and Docker escape.*
 
-Domjudge is an automated system to run programming contests like the International Collegiate Programming Contest 
+DOMjudge is an automated system to run programming contests like the International Collegiate Programming Contest 
 (ICPC). It's completely open source, written using PHP Symfony and available on 
 [GitHub](https://github.com/DOMjudge/domjudge).
 
 The goal of this project was to create an exploit which would allow an unauthenticated attacker to gain 
-arbitrary code execution with the highest privileges Domjudge had access to.
+arbitrary code execution with the highest privileges DOMjudge had access to.
 
 ## Table of contents
-- [Domjudge](#domjudge-overview)
+- [DOMjudge](#domjudge-overview)
 - [Testing setup](#testing-setup)
 - [Vulnerabilities](#the-vulnerabilities)
 - [Exploit](#the-exploit)
 - [Lessons learned](#lessons-learned)
 - [Conclusion](#conclusion)
 
-## Domjudge overview
-Before we continue, a quick overview of how Domjudge works on a high level.
+## DOMjudge overview
+Before we continue, a quick overview of how DOMjudge works on a high level.
 
-Domjudge consists of two components: one "domserver" and one or several "judgehosts", these are each independent 
+DOMjudge consists of two components: one "domserver" and one or several "judgehosts", these are each independent 
 Docker images on the Docker registry.
 
 The domserver is what most users see, it contains the public scoreboard, admin panel and submission interface. 
@@ -32,11 +32,11 @@ a judgehost it builds or compiles the program if needed, runs it against the pre
 reports the results back to the domserver.
 
 ## Testing setup
-The first part of this project was to create a test setup and do some background reading into setting up Domjudge.
+The first part of this project was to create a test setup and do some background reading into setting up DOMjudge.
 
 For the test setup, I found [this](https://medium.com/@lutfiandri/deploy-domjudge-using-docker-compose-7d8ec904f7b) 
-blog post about deploying Domjudge within Docker. I wanted the test instance to have Domjudge configured 
-per the developers' recommendations, and using the provided Domjudge Docker image 
+blog post about deploying DOMjudge within Docker. I wanted the test instance to have DOMjudge configured 
+per the developers' recommendations, and using the provided DOMjudge Docker image 
 seemed like a good way to ensure that.
 
 When setting this up I noticed an interesting Docker configuration being used. This provided a good end goal and 
@@ -194,7 +194,7 @@ page on PHP Symfony. It contains an in-depth explanation of exploiting Edge-Side
 included at runtime.
 
 This feature is quite dangerous and has been heavily exploited in the past. Because of this, more recent versions of 
-Symfony disable this feature by default. Fortunately for this project, the feature was enabled within Domjudge.
+Symfony disable this feature by default. Fortunately for this project, the feature was enabled within DOMjudge.
 
 ESI requests must be signed using the Symfony secret. In theory, this prevents an attacker from using this feature to 
 run unauthorized code, however, if an attacker can leak or guess the secret this security boundary drops.
@@ -228,7 +228,7 @@ public function countryFlagAction(Request $request, string $countryCode, string 
         	throw new NotFoundHttpException("country $alpha3code does not exist");
     	}
     	$alpha2code = strtolower(Countries::getAlpha2Code($alpha3code));
-    	$flagFile = sprintf('%s/public/flags/%s/%s.svg', $this->dj->getDomjudgeWebappDir(), $size, $alpha2code);
+    	$flagFile = sprintf('%s/public/flags/%s/%s.svg', $this->dj->getDOMjudgeWebappDir(), $size, $alpha2code);
 
     	if (!file_exists($flagFile)) {
         	throw new NotFoundHttpException("country flag for $alpha3code of size $size not found");
@@ -292,7 +292,7 @@ At one point, I did investigate one route that hadn't been released yet.
     	$contestPage = preg_replace($assetRegex, '$1$2', $contestPage);
 
     	$zip = new ZipArchive();
-    	if (!($tempFilename = tempnam($this->dj->getDomjudgeTmpDir(), "contest-"))) {
+    	if (!($tempFilename = tempnam($this->dj->getDOMjudgeTmpDir(), "contest-"))) {
         	throw new ServiceUnavailableHttpException(null, 'Could not create temporary file.');
     	}
 
@@ -420,13 +420,13 @@ however, the platform I was developing the challenge for did not retire challeng
 
 This put me in a bit of a conundrum, once a player found a chain of exploits it would become significantly easier for 
 new players to check the changes made to find old vulnerabilities. To compensate for this the CTF could constantly 
-update Domjudge, however, this would result in a significant difficulty spike after each player solved it.
+update DOMjudge, however, this would result in a significant difficulty spike after each player solved it.
 
 While deliberating on this, I learned that the maintainers were planning to release a new version soon. This led me to 
 decide to report my findings.
 
-I'd like to thank the Domjudge maintainers for getting back to me incredibly fast (5 minutes on a Sunday evening) and 
-fixing all issues within 2 days! This does not seem to be limited to security issues, the Domjudge 
+I'd like to thank the DOMjudge maintainers for getting back to me incredibly fast (5 minutes on a Sunday evening) and 
+fixing all issues within 2 days! This does not seem to be limited to security issues, the DOMjudge 
 [slack](https://domjudge-org.slack.com/) is also filled with very fast responses from the maintainers. It's very cool to
 see how passionate they are about this project.
 
