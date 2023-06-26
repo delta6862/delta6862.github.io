@@ -39,10 +39,11 @@ blog post about deploying DOMjudge within Docker. I wanted the test instance to 
 per the developers' recommendations, and using the provided DOMjudge Docker image 
 seemed like a good way to ensure that.
 
-When setting this up I noticed an interesting Docker configuration being used. This provided a good end goal and 
-allowed me to work backwards. Instead of asking "I have x vulnerability, what can I do with it?" I could go 
-"I need x access, how do I achieve y?". This helped focus the research while iteratively making the required 
-goal "y" smaller. For example, first looking for code execution, then file read, then HTML injection.
+When setting this up I noticed an interesting Docker configuration being used, which will be mentioned in the next 
+section. This configuration provided a good end goal and allowed me to work backwards. Instead of asking "I have x 
+vulnerability, what can I do with it?" I could go "I need x access, how do I achieve y?". This helped focus the research 
+while iteratively making the required goal "y" smaller. For example, first looking for code execution, then file read, 
+then HTML injection.
 
 ## The vulnerabilities
 #### Docker escape
