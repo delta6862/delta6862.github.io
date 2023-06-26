@@ -1,7 +1,7 @@
 ## Domjudge: Full chain
 *TL;DR: Domjudge from git commit ee3dea3 up to git commit 2a244d9 allows for unauthenticated root-level code execution 
-and container escape if sign-up is enabled. This is done by abusing an arbitrary file read, Symfony Edge Side Inclusion, 
-command injection and Docker escape.*
+and container escape if user sign-up is enabled. This is done by chaining five vulnerabilities: an arbitrary file read, 
+Symfony Edge Side Inclusion, command injection, privilege escalation and Docker escape.*
 
 Domjudge is an automated system to run programming contests like the International Collegiate Programming Contest 
 (ICPC). It's completely open source, written using PHP Symfony and available on 
@@ -11,14 +11,14 @@ The goal of this project was to create an exploit which would allow an unauthent
 arbitrary code execution with the highest privileges Domjudge had access to.
 
 ## Table of contents
-- [Domjudge](#domjudge)
-- [Setup](#setup)
+- [Domjudge](#domjudge-overview)
+- [Testing setup](#testing-setup)
 - [Vulnerabilities](#the-vulnerabilities)
 - [Exploit](#the-exploit)
-- [Lessons learnt](#lessons-learnt)
+- [Lessons learned](#lessons-learned)
 - [Conclusion](#conclusion)
 
-## Domjudge
+## Domjudge overview
 Before we continue, a quick overview of how Domjudge works on a high level.
 
 Domjudge consists of two components: one "domserver" and one or several "judgehosts", these are each independent 
@@ -31,7 +31,7 @@ The judgehosts periodically poll the domserver for new submissions. When a new s
 a judgehost it builds or compiles the program if needed, runs it against the predetermined test set and then 
 reports the results back to the domserver.
 
-## Setup
+## Testing setup
 The first part of this project was to create a test setup and do some background reading into setting up Domjudge.
 
 For the test setup, I found [this](https://medium.com/@lutfiandri/deploy-domjudge-using-docker-compose-7d8ec904f7b) 
@@ -113,9 +113,10 @@ judges them and reports the results back. If we want to attack the judgehost ser
 
 2) The judge tasks themselves
 
-The second one is the most attractive target provided can queue new judgings, we have a wide degree of 
-freedom to exploit any possible bugs in. Additionally, we would likely not have to modify the behavior of the domserver 
-to exploit a potential bug. However, there are a few caveats with this attack surface:
+The second one is the more attractive target because we already control part of the judge task, our own code. This means
+that, provided that we can queue new judgings, we have a wide degree of freedom to exploit any possible bugs. 
+Additionally, we would likely not have to modify the behavior of the domserver to exploit a potential bug. 
+However, there are a few caveats with this attack surface:
 - All judgeruns are run within a chroot
 - All judgeruns run as a less privileged user instead of the domjudge user.
 
@@ -162,7 +163,7 @@ which means the domserver may dispatch a job with the submit id
 }
 ```
 
-to gain code execution on the Judgehost.
+to gain code execution on the judgehost.
 
 #### Exposed database
 This means that, in theory, controlling a submit id equals code execution. 
@@ -183,7 +184,7 @@ discovered that this vector would not have worked due to two reasons:
 That said, having control over the database, and being able to create admin users still would result in code execution 
 for reasons that will be mentioned later.
 
-#### PHP Symfony Edge Side Inclusion
+#### RCE: PHP Symfony Edge Side Inclusion
 With no luck trying to get control of the database, I went back to the original line of investigation: getting code 
 execution on the domserver.
 
@@ -206,7 +207,7 @@ In this case, the secret is securely generated and stored in three locations:
 This meant that, if we could read an arbitrary file, leak environment variables or get an admin account we 
 would have code execution.
 
-#### Flag API (near) file read
+#### Flag API (almost) file read
 With this in mind, I started going through every unauthenticated endpoint. One API endpoint, in particular, stood out, 
 the function for `/country-flags/{countryCode}/{size}`.
 
@@ -344,9 +345,9 @@ to the resulting zip.
 Crucially for this exploit, no check is done to see if `CHANGE_ME` is present before rendering. This means that, if an 
 attacker can inject text (any text) into the HTML page after rendering, they can include any file.
 
-I looked for several ways to do this, mostly investigating the filter values. Ultimately I decided to bend the rules set 
-for myself slightly, I had originally planned to exploit a system that had all default configurations. However, to make 
-this final step work I made a slight modification to the default configuration and enabled user sign-up.
+I looked for several ways to do this, mostly investigating the filter values. Ultimately I decided to bend the goal 
+slightly, I had originally planned to exploit a system that had all default configurations. However, to make 
+this final step work I made a slight modification to the default configuration to enable user sign-up.
 
 This means an attacker could register a new contestant team with the team name `/CHANGE_ME/../../etc/symfony_app.secret` 
 to leak the Symfony secret.
@@ -362,7 +363,7 @@ name, I decided to reuse the account to become authenticated.
 
 Secondly, when attempting to attack the judgehost I discovered that the PHP files were owned by root, instead of the 
 user running the domserver. While this might vary depending on the installation, I wanted to stick to the 'recommended' 
-setup. Explicitly removing a security boundary felt like cheating.
+setup. Accounting for this means the exploit would work in a wider variety of configurations.
 
 To get around this, I noticed an interesting mechanic of Symfony. To perform route matching and allow for optimization 
 Symfony builds a cache, in this case in `/opt/domjudge/domserver/webapp/var/cache/prod/*/*`, which points to the 
@@ -391,11 +392,11 @@ we can fix this by simply changing the regex in `url_matching_routes.php` to cat
 sed -i "s/|get_files\/(\[\^\/\]++)\/(\\\\\\\\d+)/|get_files\/(\[\^\/\]++)\/(\[\^\/\]++)/g" /opt/domjudge/domserver/webapp/var/cache/prod/url_matching_routes.php
 ```
 
-## Lessons learnt
+## Lessons learned
 Looking back there are three main things I would do differently if I were to approach this project again.
 
 Firstly, I would do more background reading on the framework itself. Something as simple as building a hello world app 
-would would have helped understanding the concept of controllers and security as well as introduce some shortcuts early 
+would have helped understanding the concept of controllers and security as well as introduce some shortcuts early 
 on like the Symfony console.
 
 Secondly, note keeping. When I first started this project I was sitting in the back of a car, lazily browsing code and 
@@ -422,44 +423,12 @@ new players to check the changes made to find old vulnerabilities. To compensate
 update Domjudge, however, this would result in a significant difficulty spike after each player solved it.
 
 While deliberating on this, I learned that the maintainers were planning to release a new version soon. This led me to 
-decide to report my findings and send the following email.
-
-
-```
-Dear domjudge maintainers,
-
-I believe I have found a way to achieve root-level code execution that works in the latest git commit of domjudge. The initial vulnerability only affects a feature that is not yet present in currently released versions of domjudge.
-
-This is done utilizing a combination of five potential security vulnerabilities which are present in the latest commit of the domjudge main branch (2a244d9 at the time of writing).
-
-	1. The function "scoreboardDataZipAction" in PublicController.php can be used to include arbitrary files. One way to do this is by registering the team name "/CHANGE_ME/../../etc/symfony_app.secret", which will leak the php symfony secret.
-
-	2. Domserver is configured to allow Edge Side Inclusion, when an attacker knows the php symfony secret this may be used to gain code execution. For more information see: https://book.hacktricks.xyz/network-services-pentesting/pentesting-web/symphony
-
-	3. In judgedeamon.main.php on line 1269 an unescaped system call is made, this means an attacker that controls "submitid" may obtain code execution on the judgehost.
-
-	4. The sudoers configuration, combined with the file permissions, on a judgehost allows an attacker that has control over the domjudge user to overwrite runguard  with arbitrary code. This code may then be called using sudo, granting them root level code execution within the docker container.
-
-	5. The docker image for judgehost needs to be run with the --privileged flag, this allows an attacker that has root within the docker container to arbitrarily read and write to the host file system.
-
-
-
-In combination these vulnerabilities allow an unauthenticated attacker, with the ability to register a team, to obtain code execution on a given domserver. This then may be used to obtain superuser-level code execution on any judgehost connected to the domserver, even if the judgehost uses the provided judgehost docker image.
-
-I have included my testing setup and an exploit that works on it. When running the exploit, you need to update the URL to point to your test setup. The test setup uses the latest git version of the domjudge and domjudge-packaging repository. The exploit compromises domserver and a corresponding judgehost and then uses this to write a file to /tmp/ on the host system.
-
-Vulnerability #2 also exists in the domjudge demo web application (https://www.domjudge.org/demoweb/_fragment?_path=_controller%3Dsystem%26command%3Did%26return_value%3Dnull&_hash=zKMM9haz07rooNSZaypDSZMv1zlRfUGN8TP8CnGRSNs%3D), a quick fix for this would be disabling the phpinfo admin endpoint, which leaks the Symfony secret.
-
-I would be happy to discuss these in more detail if you'd like.
-
-Kind regards,
-```
+decide to report my findings.
 
 I'd like to thank the Domjudge maintainers for getting back to me incredibly fast (5 minutes on a Sunday evening) and 
-fixing all issues within 2 days!
-
-This does not seem to be limited to security issues, the Domjudge [slack](https://domjudge-org.slack.com/) is also 
-filled with very fast responses from the maintainers. It's very cool to see how passionate they are about this project.
+fixing all issues within 2 days! This does not seem to be limited to security issues, the Domjudge 
+[slack](https://domjudge-org.slack.com/) is also filled with very fast responses from the maintainers. It's very cool to
+see how passionate they are about this project.
 
 That concludes this blog post. I hope you enjoyed it. If you have any questions or spot any mistakes feel free to hit 
 me up on Twitter.
