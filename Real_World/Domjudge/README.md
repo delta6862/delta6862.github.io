@@ -355,12 +355,14 @@ to leak the Symfony secret.
 
 
 ## The exploit
-While chaining all the mentioned vulnerabilities together in a single exploit I ran into a few issues.
+While chaining all the mentioned vulnerabilities together in a single exploit I ran into a few issues. Both of them could
+be overcome or worked around, but I'm including them for completeness’s sake, and potentially inspiring future
+research.
 
 Firstly, it turns out that the edge-side inclusion requires authentication. I'm not entirely sure why this is, my best guess 
 is that the security settings by default require authentication for all pages, with pages having to be explicitly marked 
 as public. There is likely a way around this however, considering I was already using a user account to register a team 
-name, I decided to reuse the account to become authenticated.
+name, I decided to reuse the created account to run the ESI payload as an authenticated payload.
 
 Secondly, when attempting to attack the judgehost I discovered that the PHP files were owned by root, instead of the 
 user running the domserver. While this might vary depending on the installation, I wanted to stick to the 'recommended' 
@@ -392,6 +394,27 @@ we can fix this by simply changing the regex in `url_matching_routes.php` to cat
 ```bash
 sed -i "s/|get_files\/(\[\^\/\]++)\/(\\\\\\\\d+)/|get_files\/(\[\^\/\]++)\/(\[\^\/\]++)/g" /opt/domjudge/domserver/webapp/var/cache/prod/url_matching_routes.php
 ```
+
+On a high level, the final exploit does the following:
+
+The exploit registers a user with the team name "/CHANGE_ME/../../etc/symfony_app.secret", then it exports the scoreboard
+as a zip and extracts the symfony secret. The exploit then logs in to the created account and uses the extracted symfony 
+secret to achieve code execution. At this point the domserver is compromised, we can modify the behavior of the web 
+application and access the database. The exploit uses this access to modify the behavior of the domserver, creating a 
+malicious copy of the judgehost controller and updating the Symfony cache to use it instead of the legitimate one. 
+
+The injection point being exploited on the judgehost has a size limit. Because of this the exploit first generates an 
+executable that escapes the judgehost container. This executable is uploaded in several steps to the domserver and put 
+within the `/static/` folder, this allows the actual exploitation of the judgehost to only do two things:
+- fetch and run the executable stored on the domserver
+- sleep for a while to prevent the judgehost from reporting any errors and exiting before the exploit can run.
+
+The executable has two stages, the root stage and the escape stage. The escape implements the docker escape, mounting
+the host's root partition and writing a proof message to `/tmp/domjudge_docker_escaped.exploit` on the host. The root
+stage executes this escape as root by backing up `runguard`, overwriting it with the escape phase, running it as root
+and then cleaning up.
+
+
 
 ## Lessons learned
 Looking back there are three main things I would do differently if I were to approach this project again.
