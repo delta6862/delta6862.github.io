@@ -114,7 +114,7 @@ judges them and reports the results back. If we want to attack the judgehost ser
 
 2) The judge tasks themselves
 
-The second one is the more attractive target because we already control part of the judge task, our own code. This means
+The second one is the more attractive target because we already control part of the judge task, our code submission. This means
 that, provided that we can queue new judgings, we have a wide degree of freedom to exploit any possible bugs. 
 Additionally, we would likely not have to modify the behavior of the domserver to exploit a potential bug. 
 However, there are a few caveats with this attack surface:
@@ -179,7 +179,7 @@ credentials for the SQL server. In addition to this, it exposed the SQL port on 
 
 I didn't end up finding a way to gain control over the database without code execution, when I went back to this I also 
 discovered that this vector would not have worked due to two reasons:
-- The column type for submit id is `int`, though with enough access to the database, this can be modified.
+- The column type for submit id is `int`, though, with enough access to the database, this can be modified.
 - The ORM expects the submit id to be of type `int` and will give it a null value if it is not a valid integer.
 
 That said, having control over the database, and being able to create admin users still would result in code execution 
@@ -319,7 +319,7 @@ This function exports the scoreboard and any includes in a zip file. It does thi
 
 3) Search for all instances of this string with regex.
 
-4) Include all files these instances point too.
+4) Include all files these instances point to.
 
 For example, say an HTML file contains the following snippet:
 ```html
@@ -398,7 +398,7 @@ sed -i "s/|get_files\/(\[\^\/\]++)\/(\\\\\\\\d+)/|get_files\/(\[\^\/\]++)\/(\[\^
 On a high level, the final exploit does the following:
 
 The exploit registers a user with the team name "/CHANGE_ME/../../etc/symfony_app.secret", then it exports the scoreboard
-as a zip and extracts the symfony secret. The exploit then logs in to the created account and uses the extracted symfony 
+as a zip file and extracts the SSymfony secret. The exploit then logs in to the created account and uses the extracted symfony 
 secret to achieve code execution. At this point the domserver is compromised, we can modify the behavior of the web 
 application and access the database. The exploit uses this access to modify the behavior of the domserver, creating a 
 malicious copy of the judgehost controller and updating the Symfony cache to use it instead of the legitimate one. 
@@ -420,7 +420,7 @@ and then cleaning up.
 Looking back there are three main things I would do differently if I were to approach this project again.
 
 Firstly, I would do more background reading on the framework itself. Something as simple as building a hello world app 
-would have helped understanding the concept of controllers and security as well as introduce some shortcuts early 
+would have helped me understand the concept of controllers and security as well as introduce some shortcuts early 
 on like the Symfony console.
 
 Secondly, note keeping. When I first started this project I was sitting in the back of a car, lazily browsing code and 
@@ -429,7 +429,7 @@ my note-keeping followed roughly the same style. At the end of the project my no
 ![file-structure]
 [file-structure]: file-structure.png
 
-While it's not terrible, its certainly not as organized as it can be. A lot of things did not get taken into notes like 
+While it's not terrible, it is certainly not as organized as it can be. A lot of things did not get taken into notes like 
 links I read on my phone, thoughts I had when not working on the project and websites I didn't bother to write down. 
 All of these might have come in handy somewhere down the line.
 
